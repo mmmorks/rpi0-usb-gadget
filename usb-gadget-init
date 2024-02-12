@@ -2,20 +2,20 @@
 # avaiable gadget mode :
 # acm           = serial port
 # gser          = serial port
-# rndis         = ethernet
+# rndis         = ethernet (RNDIS)
+# ecm           = ethernet (ECM)
 # mass_storage  = mass storage
 # if you want to user rndis with windows,make sure rndis in the first gadgetmode
-gadgetmode='rndis acm mass_storage'
+gadgetmode='rndis ecm acm'
 routerOS=1
 gadgetname='gadget0'
 configdir=/sys/kernel/config/usb_gadget/$gadgetname
 serialnumber=`cat /proc/cpuinfo | grep Serial | awk {'print $3'}`	# get serial number from soc
 manufacturer='Raspberry'
 product=`hostname`							# use hostname as product info
-#rndis mac-address
+# ethernet mac-address
 HOST="48:6f:73:74:50:43" # "HostPC"
-SELF="42:61:64:55:53:42" # "BadUSB"
-#mass storage
+# mass storage
 usb_disk="/home/usb-disk.img"
 stall=1
 cdrom=0
@@ -65,6 +65,7 @@ if [ $1 = "start" ]
   modprobe usb_f_rndis
   mkdir -p functions/rndis.usb0
   echo $HOST > functions/rndis.usb0/host_addr
+  SELF="42:61:64:55:53:42" # "BadUSB"
   echo $SELF > functions/rndis.usb0/dev_addr
   echo RNDIS > functions/rndis.usb0/os_desc/interface.rndis/compatible_id
   echo 5162001 > functions/rndis.usb0/os_desc/interface.rndis/sub_compatible_id
@@ -75,6 +76,25 @@ if [ $1 = "stop" ]
   rm configs/c.1/rndis.usb0
   rmdir functions/rndis.usb0
   modprobe -r usb_f_rndis usb_f_ecm u_ether 
+fi
+}
+
+# ethernet - ecm
+function ecm {
+if [ $1 = "start" ]
+  then
+  modprobe usb_f_ecm
+  mkdir -p functions/ecm.usb0
+  echo $HOST > functions/ecm.usb0/host_addr
+  SELF="42:61:64:55:53:43" # "BadUSC"
+  echo $SELF > functions/ecm.usb0/dev_addr
+  ln -s functions/ecm.usb0 configs/c.1/
+fi
+if [ $1 = "stop" ]
+  then
+  rm configs/c.1/ecm.usb0
+  rmdir functions/ecm.usb0
+  modprobe -r usb_f_ecm u_ether 
 fi
 }
 
@@ -126,7 +146,8 @@ if [ $1 = "start" ]
   # mikrotik routerOS compability
   modprobe libcomposite
   #mount -t configfs none /sys/kernel/config
-  mkdir $configdir && cd $configdir
+  mkdir $configdir
+  cd $configdir
 
   echo 0x1d6b > idVendor  # Linux Foundation
   echo 0x0104 > idProduct # Multifunction Composite Gadget
