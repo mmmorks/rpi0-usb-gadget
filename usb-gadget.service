@@ -3,12 +3,14 @@
 [Unit]
 Description=RPi0 USB Gadget
 #Before=sysinit.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-Type=forking
+Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/usb-gadget-init start
 ExecStop=/usr/bin/usb-gadget-init stop
 
 [Install]
-WantedBy=local-fs-pre.target
+WantedBy=sysinit.target
