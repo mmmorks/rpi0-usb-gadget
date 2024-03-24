@@ -6,6 +6,7 @@
 # ecm           = ethernet (ECM)
 # mass_storage  = mass storage
 # if you want to user rndis with windows,make sure rndis in the first gadgetmode
+set -x
 gadgetmode='rndis ecm acm'
 routerOS=1
 gadgetname='gadget0'
@@ -182,11 +183,13 @@ if [ $1 = "start" ]
   
   sleep 5
 
-  nmcli connection up bridge-br0
-  nmcli connection up bridge-slave-usb0
-  nmcli connection up bridge-slave-usb1
-#  sleep 5
-#  service dnsmasq restart
+  case "$gadgetmode" in
+    *ecm*|*rndis*)
+      nmcli connection up bridge-br0
+      nmcli connection up bridge-slave-usb0
+      nmcli connection up bridge-slave-usb1
+    ;;
+  esac
 fi
 
 if [ $1 = "stop" ]
@@ -203,6 +206,15 @@ if [ $1 = "stop" ]
     do
     $run stop
   done
+
+  case "$gadgetmode" in
+    *ecm*|*rndis*)
+      nmcli connection down bridge-slave-usb1
+      nmcli connection down bridge-slave-usb0
+      nmcli connection down bridge-br0
+    ;;
+  esac
+
   rmdir configs/c.1
   rmdir strings/0x409
   if [ $routerOS -eq 1 ]

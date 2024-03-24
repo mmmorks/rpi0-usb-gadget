@@ -2,15 +2,19 @@
 
 [Unit]
 Description=RPi0 USB Gadget
-#Before=sysinit.target
-After=network-online.target
-Wants=network-online.target
+After=getty.target
+Wants=local-fs.target network.target getty.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/usb-gadget-init start
 ExecStop=/usr/bin/usb-gadget-init stop
+TimeoutSec=15
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=usb-gadget.service
+
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=multi-user.target

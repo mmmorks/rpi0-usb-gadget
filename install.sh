@@ -20,6 +20,13 @@ if [ $? -ne 0 ]
   mkdir -p /usr/lib/systemd/system && cp -f usb-gadget.service /usr/lib/systemd/system/usb-gadget.service
   chmod +x /usr/bin/usb-gadget-init
 fi
+cmp -s 99-toggle-wifi-when-usb-connects /etc/NetworkManager/dispatcher.d/99-toggle-wifi-when-usb-connects
+if [ $? -ne 0 ]
+  then
+  echo updating 99-toggle-wifi-when-usb-connects
+  cp -f 99-toggle-wifi-when-usb-connects /etc/NetworkManager/dispatcher.d/99-toggle-wifi-when-usb-connects
+  chmod 700 /etc/NetworkManager/dispatcher.d/99-toggle-wifi-when-usb-connects
+fi
 
 echo updating system configuration...
 rebootneed=0
@@ -28,6 +35,11 @@ echo "dtoverlay=dwc2" >> /boot/config.txt
 rebootneed=1
 }
 #grep -q "dwc2" /etc/modules|| echo "dwc2" >> /etc/modules
+
+nmcli con add type bridge ifname br0
+nmcli con add type bridge-slave ifname usb0 master br0
+nmcli con add type bridge-slave ifname usb1 master br0
+nmcli con modify bridge-br0 ipv4.method auto ipv4.dhcp-timeout 5 ipv6.addr-gen-mode default ipv6.dhcp-timeout 5 ipv6.method auto
 
 echo enabling services...
 systemctl enable usb-gadget.service
